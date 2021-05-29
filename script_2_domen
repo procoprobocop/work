@@ -1,0 +1,40 @@
+#!/bin/bash
+#
+#
+#
+echo "Создание ярлыка Disk2 на рабочем столе"
+sleep 5
+#даём полные права для всех на директорию Disk2
+sudo chmod 777 /mnt/Disk2/
+#создаём мягкую ссылку директории Disk2 на рабочем столе локального пользователя
+sudo ln -s /mnt/Disk2	/home/$USER/Рабочий\ стол/
+#
+#копируем скрипты в общий каталог Disk2 с сохранением структуры файлов
+cp -r /home/$USER/work/ /mnt/Disk2/
+#устанавливаем программу добавления в домен
+sudo dnf -y install join-to-domain
+#отключаем блокировку действий пользователя, но не отключаем журналирование
+sudo sed -i "s/SELINUX=enforcing/SELINUX=permissive/" /etc/selinux/config
+#
+#
+#
+echo "Вам будет предложено добавить компьютер в домен, после чего произойдёт перезагрузка"
+echo "Укажите группу пользователя которого добавляете в домен (как в Active Directory)"
+sleep 10
+#редактируем файл nsswitch.conf, выдаём приоритет системе доменных имён
+sudo sed -i '67d' /etc/authselect/nsswitch.conf
+sudo perl -i -pe 'print "hosts:      files dns mdns4_minimal [NOTFOUND=return] mdns4\n" if $. == 67' /etc/authselect/nsswitch.conf
+#запускаем скрипт добавления в домен
+sudo join-to-domain.sh
+#проверяем информацио о домене, доступ контроллеров домена и членство компьютера в домене
+realm discover -v PTO.local
+sleep 5
+cd /etc/
+#даём группам "Администраторы домена" и "Пользователи домена" права выполнения команд от имени суперпользователя 
+sudo perl -i -pe 'print "%Администраторы\\ домена  ALL=(ALL)       ALL\n" if $. == 108' sudoers
+sudo perl -i -pe 'print "%Пользователи\\ домена  ALL=(ALL)       ALL\n" if $. == 109' sudoers
+cd
+#перезагружаемся, чтобы магия сработала
+reboot
+
+
