@@ -1,0 +1,24 @@
+#!/bin/bash
+#
+#
+#
+echo "Установка и настройка VNC"
+sleep 5
+#устанавливаем программу x11vnc
+dnf -y install x11vnc
+#задаём пароль на вход
+echo -n "Введите пароль для подключения по VNC > "
+read passwd
+x11vnc -storepasswd $passwd /etc/vncpasswd
+#выдаём права на чтение и выполнение для файла с паролем
+chmod 544 /etc/vncpasswd
+#скачиваем и подгружаем сервисный файл с настройками
+cd /lib/systemd/system/
+smbget -arR smb://10.10.73.15/public/setting/vnc
+cd
+#перезагружаем демона, включаем службу в автозагрузку, запускаем и проверяем статус
+systemctl daemon-reload 
+systemctl enable x11vnc.service  
+systemctl start x11vnc.service  
+systemctl status x11vnc.service  
+
