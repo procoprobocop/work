@@ -1,0 +1,34 @@
+#!/bin/bash
+#
+#
+#
+echo "Проверка прав LocalAdmin и установка обновлений"
+sleep 5
+#заходим в директорию окнфигурации пользователя
+cd /home/LocalAdmin/.config/dconf/
+#задаём пользователя LocalAdmin владельцем директории
+sudo chown LocalAdmin user
+#выходим корневой домашний каталог пользователя
+cd
+#скачиваем и устанавливаем свежие сборки программ
+sudo dnf -y update && sudo dnf -y upgrade
+#
+#
+#
+echo "Сейчас будет настроен Disk2 и произведена перезагрузка"
+sleep 5
+#создаём таблицу разделов на диске sdb
+sudo parted /dev/sdb mktable gpt
+#создаем раздел с файловой системой ext4 и отводим ему 100% места на диске
+sudo parted /dev/sdb mkpartfs primary ext4 0% 100%
+#форматируем созданный раздел
+sudo mkfs.ext4 /dev/sdb1
+#заходим в директорию mnt
+cd /mnt/
+#создаём директорию Disk2
+sudo mkdir Disk2
+cd
+#редактируем файл /etc/fstab монтируя вновь созданный раздел диска /dev/sdb1 в директорию Disk2
+sudo sh -c "echo '/dev/sdb1	/mnt/Disk2	ext4	defaults	1 2' >> /etc/fstab"
+#перезагружаемся, иначе магия не сработает
+reboot
