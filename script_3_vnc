@@ -1,0 +1,29 @@
+#!/bin/bash
+#
+#
+#
+echo "Установка и настройка VNC"
+sleep 5
+#устанавливаем программу x11vnc
+dnf -y install x11vnc
+#задаём пароль на вход
+echo -n "Введите пароль для подключения по VNC > "
+read passwd
+x11vnc -storepasswd $passwd /etc/vncpasswd
+#выдаём права на чтение и выполнение для файла с паролем
+chmod 544 /etc/vncpasswd
+#скачиваем и подгружаем сервисный файл с настройками
+cd /lib/systemd/system/
+#создаём службу для подключения по протоколу vnc
+echo -n "Через запятую, без пробелов введите ip-адреса, которые будут подключаться к настриваемой машине по протоколу VNC (пример: 192.168.1.15,192.168.1.26)> "
+read ipvnc
+echo -e "[Unit]\nDescription=x11vnc server for GDM\nAfter=display-manager.service\n[Service]\nExecStart=/usr/bin/x11vnc -allow $ipvnc -many -shared -forever -nomodtweak -capslock -display :0 -auth guess -noxdamage -rfbauth /etc/vncpasswd\nRestart=on-failure\nRestartSec=3\n[Install]\nWantedBy=graphical.target" > /lib/systemd/system/x11vnc.service
+#даём файлу x11vnc.service права на выполнение
+chmod ugo+x /lib/systemd/system/x11vnc.service
+cd
+#перезагружаем демона, включаем службу в автозагрузку, запускаем и проверяем статус
+systemctl daemon-reload
+systemctl enable x11vnc.service
+systemctl start x11vnc.service
+systemctl status x11vnc.service
+
