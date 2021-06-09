@@ -1,0 +1,497 @@
+#!/bin/bash
+#
+#
+#
+echo "Создание ярлыка Disk2 на рабочем столе"
+sleep 3
+#создаём переменную DOMAIN и присваиваем ей значение dns-имени домена
+DOMAIN=$(dnsdomainname -d)
+#создаём мягкую ссылку диска Disk2 на рабочем столе
+ln -s /mnt/Disk2 /home/$USER@$DOMAIN/Рабочий\ стол/
+#
+#
+#
+echo "Добавление папки Обмен на рабочем столе"
+sleep 3
+#создаём на рабочем столе файл .desktop
+#имя PTOSRV007 можно заменить на любое другое имя сетевого диска (или ip-адрес), который планируется добавить
+echo -e "[Desktop Entry]\nType=Link\nURL=smb://$DOMAIN;$USER@PTOSRV007\nName=Obmen\nStartupNotify=true\nIcon=/usr/share/icons/hicolor/48x48/apps/mate-disk-usage-analyzer.png" > /home/$USER@$DOMAIN/Рабочий\ стол/Obmen.desktop
+#даём файлу Obmen.desktop права на выполнение
+chmod ugo+x /home/$USER@$DOMAIN/Рабочий\ стол/Obmen.desktop
+#устанавливаем редактор gui-оболочки и отключаем отображение смонтированных дисков на рабочем столе
+sudo dnf -y install dconf-editor dconf-devel
+dconf write /org/mate/caja/desktop/volumes-visible false
+dconf write /org/mate/marco/general/compositing-manager true
+dconf write /org/mate/screensaver/idle-activation-enabled false
+dconf write /org/mate/screensaver/lock-enabled false
+#
+#
+#
+echo "Настройка SSH"
+sleep 3
+#в файле hosts.allow разрешаем доступ ip-адресам которые будут подключаться к настриваемой машине по протоколу SSH
+echo -n "Через запятую, разделяя пробелом введите ip-адреса, которые будут подключаться к настриваемой машине по протоколу SSH (пример: 192.168.1.15, 192.168.1.26)> "
+read ipssh
+sudo sh -c "echo 'sshd: $ipssh' >> /etc/hosts.allow"
+#в файле hosts.deny запрещаем подключение к настраиваемой машине всем ip-адресам не включённым список hosts.allow 
+sudo sh -c "echo 'sshd: ALL' >> /etc/hosts.deny"
+#меняем порт подключения 22 на 2002
+sudo sed -i '17d' /etc/ssh/sshd_config
+sudo perl -i -pe 'print "Port 2002\n" if $. == 17' /etc/ssh/sshd_config
+#открываем доступ только по протоколу IPv4
+sudo sed -i '18d' /etc/ssh/sshd_config
+sudo perl -i -pe 'print "AddressFamily inet\n" if $. == 18' /etc/ssh/sshd_config
+#запрещаем подключение от учётной записи root
+sudo sed -i '36d' /etc/ssh/sshd_config
+sudo perl -i -pe 'print "PermitRootLogin no\n" if $. == 36' /etc/ssh/sshd_config
+#добавляем порт 2002 в selinux и перезапускаем службу sshd 
+sudo semanage port -a -t ssh_port_t -p tcp 2002
+sudo systemctl restart sshd
+#
+#
+#
+echo "Установка программ не входящих в официальный репозиторий"
+sleep 3
+#скачиваем tar архив с установочными файлами из google drive
+cd /mnt/Disk2
+wget --load-cookies /tmp/cookies.txt "https://drive.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://drive.google.com/uc?export=download&id=1AFPdCxhaCOfoR6K0JnMt04tTGY5-rPZM' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1AFPdCxhaCOfoR6K0JnMt04tTGY5-rPZM" -O repo.tar && rm -rf /tmp/cookies.txt
+#распаковываем архив и заходим в директорию с установочными файлами
+tar -xvf repo.tar && rm -rf repo.tar && cd /mnt/Disk2/repo/
+#
+#
+#
+echo "Установка чата Spark"
+sleep 3
+#запускаем установочный файл
+sudo dnf -y install ./spark-2.9.4.rpm
+#создаём директорию автозагрузки и выдаём ей права
+sudo mkdir -p /home/$USER@$DOMAIN/.config/autostart
+sudo chmod 777 /home/$USER@$DOMAIN/.config/autostart
+#создаём файл автозагрузки и выдаём ему права на выполнение
+sudo echo -e "[Desktop Entry]\nType=Application\nExec=/bin/sh "/opt/Spark/Spark" %U\nHidden=false\nX-MATE-Autostart-enabled=true\nName=Spark\nX-MATE-Autostart-Delay=0" > /home/$USER@$DOMAIN/.config/autostart/spark.desktop
+sudo chmod ugo+x /home/$USER@$DOMAIN/.config/autostart/spark.desktop
+echo "Настройку учётной записи выполняете самостоятельно"
+sleep 3
+#
+#
+#
+echo "Установка и настройка VipNet Client"
+sleep 3
+#запускаем установочные пакеты
+sudo dnf -y install vipnetclient-gui_gost_ru_*.rpm
+sudo dnf -y install libxcb-devel-1.14-2.el7.i686 libxcb-doc-1.14-2.el7.noarch
+#указываем путь к .dst-файлу
+echo -n "Укажите полный путь к dst-файлу, например: /mnt/Disk2/LARM-Sal-PTOUD-СметанинПВ/abn_5284.dst > "
+read name
+#вводим пароль от .dst-файла
+echo -n "Введите пароль от вашего dst-файла и в следующем запросе повторите ввод > "
+read passwd
+#связываем файл с паролем
+sudo vipnetclient installkeys $name --psw $passwd
+#выполняем настройки клиента
+sudo vipnetclient debug --loglevel 0
+sudo vipnetclient debug --mftp-reconnect
+sudo vipnetclient debug --tcp-tunnel-mode auto
+sudo vipnetclient debug --autostart
+sudo systemctl stop vipnetclient
+sudo vipnetclient debug --tunnel-visibility 0
+#выполняем настройки маршрутизации клиента 
+sudo sed -i '13d' /etc/vipnet.conf
+sudo sh -c "echo 'iptables=off' >> /etc/vipnet.conf"
+sudo sed -i '9d' /etc/vipnet.conf
+echo -n "Через запятую, без пробелов введите ip-адреса DNS-серверов вашего домена (пример: 192.168.1.15,192.168.1.26)> "
+read ipvip
+sudo perl -i -pe 'print "trusted=$ipvip\n" if $. == 9' /etc/vipnet.conf
+#редактируем настройки маршрутизации системы, даём приоритет dns-именам
+sudo sed -i '67d' /etc/authselect/nsswitch.conf
+sudo perl -i -pe 'print "hosts:      files resolve [!UNAVAIL=return] myhostname dns mdns4_minimal\n" if $. == 67' /etc/authselect/nsswitch.conf
+#стартуем и на всякий случай перезапускаем клиента 
+sudo systemctl start vipnetclient
+sudo systemctl restart vipnetclient
+echo "VipNet Client установлен!"
+echo "Можете ознакомиться с основными параметрами"
+sleep 3
+sudo vipnetclient info
+sleep 5
+#создаём журнал для ошибок 
+echo "Создадим журнал хранения ошибок"
+sleep 3
+sudo mkdir /var/log/vipnetlog
+echo -n "Введите пароль vipnet нашей организации > "
+read passwd
+sudo vipnetclient eventlog --psw $passwd --output /var/log/vipnetlog/
+echo "Журнал создан, он находится здесь: /var/log/vipnetlog/"
+sleep 3
+#
+#
+#
+echo "Установка антивируса Касперского"
+sleep 3
+#запускаем установочный пакеты агента
+sudo dnf -y install klnagent64*.rpm
+#запускаем скрипт
+sudo /opt/kaspersky/klnagent64/lib/bin/setup/postinstall.pl
+#запускаем установочный пакет KES и perl 
+sudo dnf -y install kesl-*.rpm
+sudo dnf -y install perl-Getopt-Long
+#запускаем скрипт 
+sudo /opt/kaspersky/kesl/bin/kesl-setup.pl 
+#
+#
+#
+echo "Установка офиса Р-7"
+sleep 3
+#запускаем установочный пакет
+sudo dnf -y install r7-office.rpm
+#добавляем в программы по умолчанию
+xdg-mime default "r7-office-desktopeditors.desktop" "application/vnd.oasis.opendocument.text"
+xdg-mime default "r7-office-desktopeditors.desktop" "application/vnd.oasis.opendocument.spreadsheet"
+xdg-mime default "r7-office-desktopeditors.desktop" "application/vnd.ms-excel"
+xdg-mime default "r7-office-desktopeditors.desktop" "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+xdg-mime default "libreoffice-draw.desktop" "application/pdf"
+echo "Лицензию активируете самостоятельно"
+sleep 3
+#
+#
+#
+echo "Установка Консультант Плюс"
+sleep 3
+#устанвливаем эмулятор wine
+sudo dnf -y install wine winetricks
+#скачиваем обновления
+winetricks riched30 winhttp
+sudo winetricks --self-update 
+wine --version
+#запускаем редактор настроек.
+#На вкладке Графика убираем галочку в пункте "Разрешить менеджеру окон декорировать окна".
+#На вкладке Приложения выставляем версию Windows: Windows 10.
+winecfg
+#редактируем файлы auto.samba и auto.master.
+echo -n "Укажите ip-адрес диска, на котором располагается папка Consultant (пример: 10.12.24.4)> "
+read ipcons
+sudo sh -c "echo '/mnt/samba	/etc/auto.samba	--ghost' >> /etc/auto.master"
+sudo sh -c "echo share     -fstype=cifs,rw,noperm,username=guest,password= ://$ipcons/Consultant > /etc/auto.samba"
+sudo sh -c "echo share1     -fstype=cifs,rw,noperm,username=guest,password= ://$ipcons/region >> /etc/auto.samba"
+#добавляем службу в автозагрузку и перезапускаем
+sudo systemctl start autofs.service 
+sudo systemctl enable autofs.service
+sudo systemctl restart autofs.service
+#запускаем редактор настроек.
+#На вкладке Диски добавляем диск F и указываем путь /mnt/samba/share
+#На вкладке Диски добавляем диск G и указываем путь /mnt/samba/share1
+#Дополнительно -> тип Сетевой диск -> Применить -> OK.
+winecfg
+#запускаем консультант. Первый запуск может быть долгим
+wine F:\cons.exe /linux /yes
+#копируем иконку
+sudo cp -r /mnt/Disk2/repo/cons.ico /usr/share/icons/
+#создаём на рабочем столе файл .desktop
+cd /home/$USER@$DOMAIN/Рабочий\ стол/
+echo -e "[Desktop Entry]\nName=ConsultantPlus\nExec=wine F:\cons.exe /linux /yes\nType=Application\nStartupNotify=true\nComment=ConsultantPlus\nIcon=/usr/share/icons/cons.ico\nStartupWMClass=cons.exe" > /home/$USER@$DOMAIN/Рабочий\ стол/ConsultantPlus.desktop
+echo -e "[Desktop Entry]\nName=ConsultantPlusRegion\nExec=wine G:\cons.exe /linux /yes\nType=Application\nStartupNotify=true\nComment=ConsultantPlusRegion\nIcon=/usr/share/icons/cons.ico\nStartupWMClass=cons.exe" > /home/$USER@$DOMAIN/Рабочий\ стол/ConsultantPlusRegion.desktop
+#даём файлам .desktop права на выполнение
+chmod ugo+x /home/$USER@$DOMAIN/Рабочий\ стол/ConsultantPlus.desktop
+chmod ugo+x /home/$USER@$DOMAIN/Рабочий\ стол/ConsultantPlusRegion.desktop
+cd /mnt/Disk2/repo/
+#обновляем значки рабочего стола
+sudo gtk-update-icon-cache -f -t /usr/share/icons/hicolor
+sudo update-mime-database /usr/share/mime
+sudo update-desktop-database /usr/share/applications
+#
+#
+#
+echo "Установка браузеров"
+sleep 3
+#запуск установочных пакетов 
+sudo dnf -y install Yandex.rpm
+sudo dnf -y install opera-stable_*.rpm
+wget https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm 
+sudo dnf -y localinstall google-chrome-stable_current_x86_64.rpm 
+sudo dnf -y install chromium
+#
+#
+#
+echo "Установка 1С (терминальная)"
+sleep 3
+#создаём на рабочем столе файл .desktop
+sudo echo -e "[Desktop Entry]\nType=Application\nExec=remmina-file-wrapper %U\nName=1C\nStartupNotify=true\nComment=1C\nIcon=/usr/share/icons/redos/48x48/status/network-idle.png" > /home/$USER@$DOMAIN/Рабочий\ стол/1C.desktop
+#даём права на выполнение
+chmod ugo+x /home/$USER@$DOMAIN/Рабочий\ стол/1C.desktop
+echo "После запуска RDP-клиента вводим ip-адрес вашего сервера 1С"
+sleep 3
+#
+#
+#
+echo "Установка 1C (консольная)"
+sleep 3
+#заходим в директорию с установочными пакетами и запускаем их
+cd /mnt/Disk2/repo/1C
+sudo dnf -y install webkitgtk3-*.rpm webkitgtk3-devel-*.rpm
+sudo dnf -y install 1c-enterprise-*-client-*.rpm 1c-enterprise-*-common-*.rpm 1c-enterprise-*-server-*.rpm 1c-enterprise-*-client-nls-*.rpm 1c-enterprise-*-ws-*.rpm 1c-enterprise-*-ws-nls-*.rpm 1c-enterprise-*-crs-*.rpm
+#копируем иконку
+sudo cp -r /mnt/Disk2/repo/1C/1c.ico /usr/share/icons/
+#создаём на рабочем столе файл .desktop
+sudo echo -e "[Desktop Entry]\nType=Application\nExec=/opt/1cv8/x86_64/8.3.18.1289/1cestart\nName[ru_RU]=1С:Предприятие\nStartupNotify=true\nComment[ru_RU]=1С:Предприятие x86_64\nIcon=/usr/share/icons/1c.ico" > /home/$USER@$DOMAIN/Рабочий\ стол/1С:Предприятие.desktop
+#даём права на выполнение
+chmod ugo+x /home/$USER@$DOMAIN/Рабочий\ стол/1С:Предприятие.desktop
+#поднимаемся на директорию выше и обновляем значки рабочего стола
+cd /mnt/Disk2/repo/
+sudo gtk-update-icon-cache -f -t /usr/share/icons/hicolor
+sudo update-mime-database /usr/share/mime
+sudo update-desktop-database /usr/share/applications
+echo "После установки запустите 1С-клиент и укажите авторизационные данные вашего сервера"
+sleep 3
+#
+#
+#
+echo "Установка Lotus Notes"
+sleep 3
+#спускаемся в директорию и запускаем .exe файл при помощи эмулятора wine
+cd /mnt/Disk2/repo/Lotus/LNB9/
+wine setup.exe
+#поднимаемся на директорию выше и запускаем .exe файлы при помощи эмулятора wine
+cd ..
+wine 901FP5SHF237_W32_basic.exe
+wine eztwain_setup.exe
+#подменяем установленные файлы (этот костыль нужен из-за кривизны установки в Linux)
+rm -rf /home/$USER@$DOMAIN/.wine/drive_c/Lotus/Notes/*
+cp -pr /mnt/Disk2/repo/Lotus/Notes/* /home/$USER@$DOMAIN/.wine/drive_c/Lotus/Notes/
+#удаляем лишнюю ссылку
+sed -i '3d' /home/$USER@$DOMAIN/Рабочий\ стол/IBM\ Notes\ \(Basic\).desktop
+#указываем правильный путь 
+perl -i -pe 'print "Exec=wine C:\\\\\\Lotus\\\\\\Notes\\\\\\\\notes.exe -sa\n" if $. == 3' /home/$USER@$DOMAIN/Рабочий\ стол/IBM\ Notes\ \(Basic\).desktop
+echo "Запускается Lotus Notes, укажите расположение своего id файла"
+sleep 3
+#запускаем программу 
+wine C:\\Lotus\\Notes\\notes.exe -sa
+#удаляем лишние ссылки с рабочего стола
+rm -rf /home/$USER@$DOMAIN/Рабочий\ стол/IBM\ Notes\ \(Basic\).lnk
+rm -rf /home/$USER@$DOMAIN/Рабочий\ стол/EZTwain\ Pro\ User\ Guide.lnk
+rm -rf /home/$USER@$DOMAIN/Рабочий\ стол/EZTwain\ Pro\ User\ Guide.desktop
+#
+#
+#
+echo "Установка КРИПТО-ПРО"
+sleep 3 
+#спускаемся в директорию, даём скрипту права на выполнение и запускаем его
+cd /mnt/Disk2/repo/CryptoPRO/
+sudo chmod ugo+x install_gui.sh
+sudo ./install_gui.sh
+#устанавливаем лицензию
+/opt/cprocsp/sbin/amd64/cpconfig -license -view
+echo "Сверяйте введённый ключ"
+echo "Если ошиблись, по завершении работы скрипта введите эту команду:"
+echo "/opt/cprocsp/sbin/amd64/cpconfig -license -set номер_лицензии"
+sleep 10
+#устанавливаем инструменты для подписи, хранения ключевых носителей и шифрования
+sudo dnf -y install ifd-rutokens
+sudo dnf -y localinstall /mnt/Disk2/repo/CryptoPRO/cprocsp-rdr-jacarta-*.rpm
+sudo dnf -y install token-manager
+sudo dnf -y install gostcryptogui caja-gostcryptogui
+cd /mnt/Disk2/repo/
+#
+#
+#
+echo "Установка расширений для браузеров"
+echo "ВНИМАНИЕ! ВНИМАНИЕ! ВНИМАНИЕ!" && sleep 3 && echo "Сейчас будет производиться настройка плагинов" && sleep 3 && echo "После установки каждого плагина - ЗАКРЫВАЙТЕ БРАУЗЕР!" && sleep 3 && echo "Иначе магия не сработает..." && sleep 3 && echo "На установку плагина и ЗАКРЫТИЕ браузера выделяется 10 секунд" && sleep 10
+echo "Плагин Госуслуги"
+sleep 3
+#ставим пакет с плагином в систему, а затем инсталируем его руками в браузер 
+sudo dnf -y install ifcplugin-chromium
+python -m webbrowser "https://chrome.google.com/webstore/detail/%D1%80%D0%B0%D1%81%D1%88%D0%B8%D1%80%D0%B5%D0%BD%D0%B8%D0%B5-%D0%B4%D0%BB%D1%8F-%D0%BF%D0%BB%D0%B0%D0%B3%D0%B8%D0%BD%D0%B0-%D0%B3%D0%BE/pbefkdcndngodfeigfdgiodgnmbgcfha?hl=ru&authuser=1" 
+sleep 10
+echo "CryptoPro Browser Plug-in"
+sleep 3
+cd /mnt/Disk2/repo/cades_linux_amd64
+#ставим пакет с плагином в систему, а затем инсталируем его руками в браузер 
+sudo dnf -y install ./cprocsp-pki*rpm
+cd /mnt/Disk2/repo/
+python -m webbrowser "https://chrome.google.com/webstore/detail/cryptopro-extension-for-c/iifchhfnnmpdbibifmljnfjhpififfog?hl=ru && xdg-open https://www.cryptopro.ru/sites/default/files/products/cades/demopage/cades_bes_sample.html"
+sleep 10
+echo "Контур.Плагин"
+sleep 3
+python -m webbrowser "https://chrome.google.com/webstore/detail/%D0%BA%D0%BE%D0%BD%D1%82%D1%83%D1%80%D0%BF%D0%BB%D0%B0%D0%B3%D0%B8%D0%BD/hnhppcgejeffnbnioloohhmndpmclaga"
+sleep 10
+#ставим пакет с плагином в систему, а затем инсталируем его руками в браузер 
+sudo dnf -y install kontur.plugin_amd64.rpm
+python -m webbrowser "https://chrome.google.com/webstore/detail/%D0%BF%D0%BE%D0%BC%D0%BE%D1%89%D0%BD%D0%B8%D0%BA-%D0%B4%D0%B8%D0%B0%D0%B3%D0%BD%D0%BE%D1%81%D1%82%D0%B8%D0%BA%D0%B8/inlmamahcfioibldbpbaechbpeeaelin"
+#ставим пакет с плагином в систему, а затем инсталируем его руками в браузер 
+sudo dnf -y install diag.plugin-*.rpm
+sleep 10
+python -m webbrowser "https://install.kontur.ru/kekep?_ga=2.232358492.2121287449.1613045347-237475827.1613045347"
+#
+#
+#
+echo "Установка DWGViewer"
+sleep 3
+#устанавливаем читалку для AutoCAD-файлов
+sudo dnf -y install freeglut-devel
+sudo dnf -y install VariCAD_View_*.rpm
+#
+#
+#
+echo "Установка программы для распознавания текста"
+sleep 3
+#устанавливаем пакеты для сканирования и распознования текста
+sudo dnf -y install yagf aspell-ru aspell-en
+sudo dnf -y install yagf-0.9.5-5.el7.i686
+sudo dnf -y install xsane libksane libksane-devel pantum-drivers-sane
+sudo dnf -y install perl-Image-Sane sane-backends-daemon sane-backends-devel sane-frontends xsane-gimp
+echo "Настройки программы xsane выполняете самостоятельно"
+sleep 3
+#
+#
+#
+echo "Установка Календаря"
+sleep 3
+#распаковываем архив со скриптом и помещаем его в общую директорию 
+tar jxvf Rainlendar_*.tar.bz2
+sudo cp -r rainlendar2 /usr/share/
+#добавляем файл .desktop в автозагрузку и даём ему права на выполнение 
+sudo echo -e "[Desktop Entry]\nType=Application\nExec=/usr/share/rainlendar2/rainlendar2\nHidden=false\nX-MATE-Autostart-enabled=true\nName=Rainlendar\nX-MATE-Autostart-Delay=0" > /home/$USER@$DOMAIN/.config/autostart/rainlendar.desktop
+sudo chmod ugo+x /home/$USER@$DOMAIN/.config/autostart/rainlendar.desktop
+cd
+echo "Календарь запустится сразу после перезагрузки системы"
+sleep 3
+#
+#
+#
+echo "Программа для записи ISO-образов"
+sleep 3
+#устанавливаем программу 
+sudo dnf -y install gnome-multi-writer
+#
+#
+#
+echo "Установка программ для диагностики компьютера"
+sleep 3
+#тут большой список инструментов, которые могут пригодиться системному администратору
+sudo dnf -y install gnome-disk-utility gparted lm_sensors hwloc lshw inxi htop lsscsi
+sudo dnf -y install libX11-devel freetype-devel zlib-devel libxcb-devel libxslt-devel libgcrypt-devel libxml2-devel gnutls-devel 
+sudo dnf -y install libpng-devel libjpeg-turbo-devel libtiff-devel gstreamer-devel dbus-devel fontconfig-devel stress-ng
+sudo dnf -y install git gettext-devel openssl-devel perl-CPAN perl-devel zlib-devel
+sudo dnf groupinstall "Development Tools"
+echo "Как пользоваться этими программами можно узнать в инструкции"
+sleep 3
+#
+#
+#
+echo "Включаем Line-Out выход для наушников"
+sleep 3
+#редактируем значения конфигурационных файлов драйвера, выставляя максимальное значение громкости
+sudo sed -i '27d' /etc/modprobe.d/alsa-base.conf
+sudo perl -i -pe 'print "options bt87x index=10\n" if $. == 27' /etc/modprobe.d/alsa-base.conf
+sudo sed -i '28d' /etc/modprobe.d/alsa-base.conf
+sudo perl -i -pe 'print "options cx88_alsa index=10\n" if $. == 28' /etc/modprobe.d/alsa-base.conf
+sudo sed -i '29d' /etc/modprobe.d/alsa-base.conf
+sudo perl -i -pe 'print "options saa7134-alsa index=10\n" if $. == 29' /etc/modprobe.d/alsa-base.conf
+sudo sed -i '30d' /etc/modprobe.d/alsa-base.conf
+sudo perl -i -pe 'print "options snd-atiixp-modem index=10\n" if $. == 30' /etc/modprobe.d/alsa-base.conf
+sudo sed -i '31d' /etc/modprobe.d/alsa-base.conf
+sudo perl -i -pe 'print "options snd-intel8x0m index=10\n" if $. == 31' /etc/modprobe.d/alsa-base.conf
+sudo sed -i '32d' /etc/modprobe.d/alsa-base.conf
+sudo perl -i -pe 'print "options snd-via82xx-modem index=10\n" if $. == 32' /etc/modprobe.d/alsa-base.conf
+sudo sed -i '33d' /etc/modprobe.d/alsa-base.conf
+sudo perl -i -pe 'print "options snd-usb-audio index=10\n" if $. == 33' /etc/modprobe.d/alsa-base.conf
+sudo sed -i '34d' /etc/modprobe.d/alsa-base.conf
+sudo perl -i -pe 'print "options snd-usb-caiaq index=10\n" if $. == 34' /etc/modprobe.d/alsa-base.conf
+sudo sed -i '35d' /etc/modprobe.d/alsa-base.conf
+sudo perl -i -pe 'print "options snd-usb-ua101 index=10\n" if $. == 35' /etc/modprobe.d/alsa-base.conf
+sudo sed -i '36d' /etc/modprobe.d/alsa-base.conf
+sudo perl -i -pe 'print "options snd-usb-us122l index=10\n" if $. == 36' /etc/modprobe.d/alsa-base.conf
+sudo sed -i '37d' /etc/modprobe.d/alsa-base.conf
+sudo perl -i -pe 'print "options snd-usb-usx2y index=10\n" if $. == 37' /etc/modprobe.d/alsa-base.conf
+sudo sed -i '41d' /etc/modprobe.d/alsa-base.conf
+sudo perl -i -pe 'print "options snd-pcsp index=10\n" if $. == 41' /etc/modprobe.d/alsa-base.conf
+sudo sed -i '43d' /etc/modprobe.d/alsa-base.conf
+sudo perl -i -pe 'print "options snd-usb-audio index=10\n" if $. == 43' /etc/modprobe.d/alsa-base.conf
+#запускаем интерфейс настройки звуковой платы
+alsamixer
+#далее жмём F6 –> 0 HAD Intel PCH -> стрелочкой вверх выставляем максимальные значения следующим выходам: Master, PCM, Front, Front Mic, Frjnt Mic Boost, Surround, Center, LFE, Line, Line Boost, Rear Mic, Rear Mic Boost. Меняем значение: Auto-Mute Mode на Disable. Выходим Esc.
+#далее заходим: Параметры -> Звук -> Оборудование -> Встроенное аудио -> выставляем Профиль: Аналоговый стерео выход -> вкладка Выход -> выставляем Канал: Линейный выход.
+#подключаем наушники, проверяем звук. 
+#
+#
+#
+echo "Установка принтера\МФУ\сканера фирмы HP"
+sleep 3
+#устанавливаем драйвера и вспомогательные утилиты
+sudo dnf -y install hplip hplip-gui gutenprint manufacturer-PPDs OpenPrintingPPDs-ghostscript OpenPrintingPPDs-postscript foo2zjs 
+sudo dnf -y install python3-distro net-snmp python-cups-doc hpijs PyQt4 python-reportlab
+#выставляем python3 программой для запуска скриптов .py по умолчанию 
+sudo ln -fs /usr/bin/python3 /usr/bin/python
+#перезапускаем службу печати
+sudo systemctl enable cups
+sudo systemctl restart cups
+#запускаем интерактивный устаночный файл
+hp-setup
+#Setup Device -> Network/Ethernet -> Next -> Выбираем нужный из списка найденных -> Next -> (ничего не трогаем, ждём. Если не найдёт драйвер, указываем нужный PPD file вручную) -> Add Printer -> во всплывающем окне вводим root и его пароль -> Ok -> Next -> переходим во вкладку Action -> Install Required Plugin (если есть)-> Yes -> Select and install an existing local copy of the plug-in file (advanced) -> указываем скачанный файл hplip-3.20.11-plugin.run -> Next -> Yes -> принимаем лицензионное соглашение -> Next -> во всплывающем окне вводим пароль от root -> Ok
+#Принтер установлен и его можно увидеть в Администрирование -> Управление устройствами HP -> HP Device Manager.
+#Отключаем уведомления: Администрирование -> Управление устройствами HP -> Configure -> Preferences -> System Tray Icon -> Always hide -> Ok.
+scanimage -L
+#Заходим: Графика -> Утилита сканирования -> выбираем значок трёх параллельных прямых -> Параметры (задаём разрешение, формат и двустороннее сканирование)-> выходим назад, указываем нужный вам сканер -> жмём стрелочку, выбираем автоподатчик\планшет, Изображение (цв. скан)\ Текст (чб. скан)-> Сканируем и сохраняем (по умолчанию сохраняет в папке Документы в формате .pdf).
+echo "Все настройки выполняете самостоятельно"
+sleep 3
+#
+#
+#
+echo "Установка принтера\МФУ\сканера фирмы Kyocera"
+sleep 3
+#запускаем установочные файлы 
+cd /mnt/Disk2/repo/
+sudo dnf -y install kyodialog-0-0.x86_64.rpm
+sudo dnf -y install kyocera-sane-2.0-0326.x86_64.rpm
+cd
+#перезапускаем службу печати и запускаем инструмент настройки принтера 
+sudo systemctl restart cups
+sudo system-config-printer
+#жмём Добавить и находим нужный вам принтер. Если система попросит установить драйвер, находим подходящий драйвер здесь: /usr/share/ppd/kyocera/
+echo "Все кастомные настройки выполняете самостоятельно"
+sleep 3
+#
+#
+#
+echo "Установка панели программ в стиле MacOS"
+sleep 3
+#это необязательная опция, но придаёт графической оболочке красоту и удобство
+#устанавливаем пакеты программ
+sudo dnf -y install plank-devel plank-docklets plank-libs
+#убираем задний фон панели, делаем его прозрачным
+dconf write /org/mate/panel/toplevels/bottom/background/color "'rgba(255,255,255,0)'"
+dconf write /org/mate/panel/toplevels/bottom/background/type "'color'"
+#увеличиваем размер значков
+dconf write /org/mate/panel/toplevels/bottom/size 50
+#убираем лишние значки с панели 
+dconf write /org/mate/panel/general/object-id-list "['menu-bar', 'menu-separator', 'window-list', 'notification-area', 'volume-control', 'st-separator', 'clock']"
+#меняем фон рабочего стола
+dconf write /org/mate/desktop/background/picture-filename "'/usr/share/backgrounds/redos/wide/desktop_1.jpg'"
+#помещаем панель в автозагрузку и даём ей права на выполнение 
+sudo echo -e "[Desktop Entry]\nType=Application\nExec=plank\nHidden=false\nX-MATE-Autostart-enabled=true\nName=Plank\nX-MATE-Autostart-Delay=0" > /home/$USER@$DOMAIN/.config/autostart/plank.desktop
+sudo chmod ugo+x /home/$USER@$DOMAIN/.config/autostart/plank.desktop
+#подменяем стандартные значки
+sudo rm -rf /home/$USER@$DOMAIN/.config/plank/dock1/launchers/*
+sudo cp -r /mnt/Disk2/repo/plank_link/* /home/$USER@$DOMAIN/.config/plank/dock1/launchers/
+#запускаем панель в фоновом режиме.
+plank > /dev/null 2>&1 &
+#
+#89-11-01-06/3567 от 07.06.2021
+#
+echo "Производим резервное копирование корневой директории в папку /mnt/Disk2/Backup"
+sleep 3
+cd /mnt/Disk2/
+sudo mkdir Backup
+sudo chmod 777 Backup
+cd Backup/
+today=$(date "+%F-%H-%M")
+sudo dd if=/dev/mapper/ro_redos-root bs=64k conv=noerror status=progress | gzip -9cf > $today.backup
+cd
+#
+#
+#
+echo "Удаляем группу Пользователи домена из файла /etc/sudoers и перезагружаемся"
+sleep 3
+sudo sed -i '109d' /etc/sudoers
+dconf write /org/mate/screensaver/idle-activation-enabled true
+dconf write /org/mate/screensaver/lock-enabled true
+sudo rm -rf /mnt/Disk2/repo
+reboot
