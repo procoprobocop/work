@@ -13,7 +13,9 @@ ________________________________________________________________________________
 
 git clone https://github.com/procoprobocop/work.git
 
-cd work/ && chmod ugo+x script_1_disk script_2_domen script_3_vnc script_4_prog
+cd work/ 
+
+chmod ugo+x script_1_disk script_2_domen script_3_vnc script_4_prog
 
 ___________________________________________________________________________________
 
