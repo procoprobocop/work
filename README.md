@@ -44,6 +44,7 @@ cd /mnt/Disk2/work/
 ./script_3_vnc
 
 chmod ugo+rwx script_1_disk script_2_domen script_3_vnc script_4_prog
+
 exit
 
 cd /mnt/Disk2/work/
