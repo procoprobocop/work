@@ -14,8 +14,9 @@ ln -s /mnt/Disk2 /home/$USER@$DOMAIN/Рабочий\ стол/
 echo "Добавление папки Обмен на рабочем столе"
 sleep 3
 #создаём на рабочем столе файл .desktop
-#имя PTOSRV007 можно заменить на любое другое имя сетевого диска (или ip-адрес), который планируется добавить
-echo -e "[Desktop Entry]\nType=Link\nURL=smb://$DOMAIN;$USER@PTOSRV007\nName=Obmen\nStartupNotify=true\nIcon=/usr/share/icons/hicolor/48x48/apps/mate-disk-usage-analyzer.png" > /home/$USER@$DOMAIN/Рабочий\ стол/Obmen.desktop
+echo -n "Введите hostname или ip-адрес сетевого диска вашей организации (пример: SETDISK001 или 192.168.1.123) > "
+read diskname
+echo -e "[Desktop Entry]\nType=Link\nURL=smb://$DOMAIN;$USER@$diskname\nName=Obmen\nStartupNotify=true\nIcon=/usr/share/icons/hicolor/48x48/apps/mate-disk-usage-analyzer.png" > /home/$USER@$DOMAIN/Рабочий\ стол/Obmen.desktop
 #даём файлу Obmen.desktop права на выполнение
 chmod ugo+x /home/$USER@$DOMAIN/Рабочий\ стол/Obmen.desktop
 #устанавливаем редактор gui-оболочки и отключаем отображение смонтированных дисков на рабочем столе
