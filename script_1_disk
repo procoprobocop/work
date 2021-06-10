@@ -20,7 +20,7 @@ sleep 5
 #создаём таблицу разделов в формате gpt
 sudo parted /dev/sdb mktable gpt
 #создаём раздел диска sdb, который будет называться sdb1 с файловой системой ext4 и отводим ему 100% места на диске
-sudo parted /dev/sdb mkpartfs primary ext4 0% 100%
+sudo parted /dev/sdb mkpart primary ext4 0% 100% 
 #форматируем созданный раздел
 sudo mkfs.ext4 /dev/sdb1
 #заходим в корневой каталог директории монтирования
