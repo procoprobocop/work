@@ -474,7 +474,7 @@ sudo cp -r /mnt/Disk2/repo/plank_link/* /home/$USER@$DOMAIN/.config/plank/dock1/
 #запускаем панель в фоновом режиме.
 plank > /dev/null 2>&1 &
 #
-#89-11-01-06/3567 от 07.06.2021
+#
 #
 echo "Производим резервное копирование корневой директории в папку /mnt/Disk2/Backup"
 sleep 3
@@ -482,8 +482,9 @@ cd /mnt/Disk2/
 sudo mkdir Backup
 sudo chmod 777 Backup
 cd Backup/
-today=$(date "+%F-%H-%M")
-sudo dd if=/dev/mapper/ro_redos-root bs=64k conv=noerror status=progress | gzip -9cf > $today.backup
+today=$(date "+%F-%H-%M-%S")
+sudo dd_rescue -ta /dev/mapper/ro_redos-root $today.img
+#восстановление образа: sudo dd_rescue -fA image_name.img /dev/mapper/ro_redos-root
 cd
 #
 #
@@ -491,7 +492,9 @@ cd
 echo "Удаляем группу Пользователи домена из файла /etc/sudoers и перезагружаемся"
 sleep 3
 sudo sed -i '109d' /etc/sudoers
+#возвращаем настройки рабочего стола и удаляем папки с установочными файлами
 dconf write /org/mate/screensaver/idle-activation-enabled true
 dconf write /org/mate/screensaver/lock-enabled true
 sudo rm -rf /mnt/Disk2/repo
+sudo rm -rf /mnt/Disk2/work
 reboot
