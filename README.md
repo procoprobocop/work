@@ -41,6 +41,8 @@ cd work/
 
 su -
 
+#укажите пароль от root
+
 cd /mnt/Disk2/work/
 
 ./script_3_vnc
