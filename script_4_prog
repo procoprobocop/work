@@ -55,7 +55,7 @@ echo "Установка программ не входящих в официа�
 sleep 3
 #скачиваем tar архив с установочными файлами из google drive
 cd /mnt/Disk2
-wget --load-cookies /tmp/cookies.txt "https://drive.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://drive.google.com/uc?export=download&id=1AFPdCxhaCOfoR6K0JnMt04tTGY5-rPZM' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1AFPdCxhaCOfoR6K0JnMt04tTGY5-rPZM" -O repo.tar && rm -rf /tmp/cookies.txt
+wget --load-cookies /tmp/cookies.txt "https://drive.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://drive.google.com/uc?export=download&id=1xcjb5j0CntQOzgnH1BELvhKB1vGRcemC' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1xcjb5j0CntQOzgnH1BELvhKB1vGRcemC" -O repo.tar && rm -rf /tmp/cookies.txt
 #распаковываем архив и заходим в директорию с установочными файлами
 tar -xvf repo.tar && rm -rf repo.tar && cd /mnt/Disk2/repo/
 #
@@ -188,8 +188,8 @@ wine F:\cons.exe /linux /yes
 sudo cp -r /mnt/Disk2/repo/cons.ico /usr/share/icons/
 #создаём на рабочем столе файл .desktop
 cd /home/$USER@$DOMAIN/Рабочий\ стол/
-echo -e "[Desktop Entry]\nName=ConsultantPlus\nExec=wine F:\cons.exe /linux /yes\nType=Application\nStartupNotify=true\nComment=ConsultantPlus\nIcon=/usr/share/icons/cons.ico\nStartupWMClass=cons.exe" > /home/$USER@$DOMAIN/Рабочий\ стол/ConsultantPlus.desktop
-echo -e "[Desktop Entry]\nName=ConsultantPlusRegion\nExec=wine G:\cons.exe /linux /yes\nType=Application\nStartupNotify=true\nComment=ConsultantPlusRegion\nIcon=/usr/share/icons/cons.ico\nStartupWMClass=cons.exe" > /home/$USER@$DOMAIN/Рабочий\ стол/ConsultantPlusRegion.desktop
+echo -e "[Desktop Entry]\nName=ConsultantPlus\nExec=wine F:\\\cons.exe /linux /yes\nType=Application\nStartupNotify=true\nComment=ConsultantPlus\nIcon=/usr/share/icons/cons.ico\nStartupWMClass=cons.exe" > /home/$USER@$DOMAIN/Рабочий\ стол/ConsultantPlus.desktop
+echo -e "[Desktop Entry]\nName=ConsultantPlusRegion\nExec=wine G:\\\cons.exe /linux /yes\nType=Application\nStartupNotify=true\nComment=ConsultantPlusRegion\nIcon=/usr/share/icons/cons.ico\nStartupWMClass=cons.exe" > /home/$USER@$DOMAIN/Рабочий\ стол/ConsultantPlusRegion.desktop
 #даём файлам .desktop права на выполнение
 chmod ugo+x /home/$USER@$DOMAIN/Рабочий\ стол/ConsultantPlus.desktop
 chmod ugo+x /home/$USER@$DOMAIN/Рабочий\ стол/ConsultantPlusRegion.desktop
@@ -484,8 +484,8 @@ sudo mkdir Backup
 sudo chmod 777 Backup
 cd Backup/
 today=$(date "+%F-%H-%M-%S")
-sudo dd_rescue -ta /dev/mapper/ro_redos-root $today.img
-#восстановление образа: sudo dd_rescue -fA image_name.img /dev/mapper/ro_redos-root
+sudo dd if=/dev/mapper/ro_redos-root conv=sync,noerror bs=64K status=progress | gzip -c  > $today.gz
+#восстановление: gunzip -c /mnt/Disk2/Backup/$today.gz | dd of=/dev/mapper/ro_redos-root status=progress
 cd
 #
 #
