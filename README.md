@@ -49,7 +49,7 @@ cd /mnt/Disk2/work/
 
 #после выполнения скрипта нажмите "q"
 
-chmod ugo+rwx script_1_disk script_2_domen script_3_vnc script_4_prog
+chmod ugo+rwx script_4_prog
 
 exit
 
