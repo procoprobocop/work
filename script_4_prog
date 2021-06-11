@@ -467,6 +467,7 @@ dconf write /org/mate/panel/general/object-id-list "['menu-bar', 'menu-separator
 #меняем фон рабочего стола
 dconf write /org/mate/desktop/background/picture-filename "'/usr/share/backgrounds/redos/wide/desktop_1.jpg'"
 #помещаем панель в автозагрузку и даём ей права на выполнение 
+DOMAIN=$(dnsdomainname -d)
 sudo echo -e "[Desktop Entry]\nType=Application\nExec=plank\nHidden=false\nX-MATE-Autostart-enabled=true\nName=Plank\nX-MATE-Autostart-Delay=0" > /home/$USER@$DOMAIN/.config/autostart/plank.desktop
 sudo chmod ugo+x /home/$USER@$DOMAIN/.config/autostart/plank.desktop
 #подменяем стандартные значки
