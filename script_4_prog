@@ -462,6 +462,8 @@ sleep 3
 #это необязательная опция, но придаёт графической оболочке красоту и удобство
 #устанавливаем пакеты программ
 sudo dnf -y install plank-devel plank-docklets plank-libs
+#запускаем панель в фоновом режиме. 
+plank > /dev/null 2>&1 &
 #убираем задний фон панели, делаем его прозрачным
 dconf write /org/mate/panel/toplevels/bottom/background/color "'rgba(255,255,255,0)'"
 dconf write /org/mate/panel/toplevels/bottom/background/type "'color'"
@@ -472,15 +474,16 @@ dconf write /org/mate/panel/general/object-id-list "['menu-bar', 'menu-separator
 #меняем фон рабочего стола
 dconf write /org/mate/desktop/background/picture-filename "'/usr/share/backgrounds/redos/wide/desktop_1.jpg'"
 #помещаем панель в автозагрузку и даём ей права на выполнение 
-DOMAIN=$(dnsdomainname -d)
 sudo echo -e "[Desktop Entry]\nType=Application\nExec=plank\nHidden=false\nX-MATE-Autostart-enabled=true\nName=Plank\nX-MATE-Autostart-Delay=0" > /home/$USER@$DOMAIN/.config/autostart/plank.desktop
 sudo chmod ugo+x /home/$USER@$DOMAIN/.config/autostart/plank.desktop
 #подменяем стандартные значки
+ls -la /home/$USER@$DOMAIN/.config/plank/dock1/
+sleep 5
+ls -la /home/$USER@$DOMAIN/.config/plank/dock1/launchers/
+sleep 5
 sudo chmod 777 /home/$USER@$DOMAIN/.config/plank/dock1/launchers
 sudo rm -rf /home/$USER@$DOMAIN/.config/plank/dock1/launchers/*
 sudo cp -r /mnt/Disk2/repo/plank_link/* /home/$USER@$DOMAIN/.config/plank/dock1/launchers/
-#запускаем панель в фоновом режиме. 
-plank > /dev/null 2>&1 &
 #
 #
 #
