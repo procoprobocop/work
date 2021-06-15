@@ -443,7 +443,12 @@ cd /mnt/Disk2/repo/
 sudo dnf -y install kyodialog-0-0.x86_64.rpm
 sudo dnf -y install kyocera-sane-2.0-0326.x86_64.rpm
 cd
-#перезапускаем службу печати и запускаем инструмент настройки принтера 
+#меняем расположение директорий, для поиска драйвера
+sudo rm -rf /usr/share/kyocera
+sudo rm -rf /usr/share/kyocera7
+sudo chmod 777 /usr/share/ppd/kyocera
+sudo ln -s /usr/share/ppd/kyocera/ /usr/share/cups/model/
+#перезапускаем службу печати и запускаем инструмент настройки принтера
 sudo systemctl restart cups
 sudo system-config-printer
 #жмём Добавить и находим нужный вам принтер. Если система попросит установить драйвер, находим подходящий драйвер здесь: /usr/share/ppd/kyocera/
@@ -471,9 +476,10 @@ DOMAIN=$(dnsdomainname -d)
 sudo echo -e "[Desktop Entry]\nType=Application\nExec=plank\nHidden=false\nX-MATE-Autostart-enabled=true\nName=Plank\nX-MATE-Autostart-Delay=0" > /home/$USER@$DOMAIN/.config/autostart/plank.desktop
 sudo chmod ugo+x /home/$USER@$DOMAIN/.config/autostart/plank.desktop
 #подменяем стандартные значки
+sudo chmod 777 /home/$USER@$DOMAIN/.config/plank/dock1/launchers
 sudo rm -rf /home/$USER@$DOMAIN/.config/plank/dock1/launchers/*
 sudo cp -r /mnt/Disk2/repo/plank_link/* /home/$USER@$DOMAIN/.config/plank/dock1/launchers/
-#запускаем панель в фоновом режиме.
+#запускаем панель в фоновом режиме. 
 plank > /dev/null 2>&1 &
 #
 #
