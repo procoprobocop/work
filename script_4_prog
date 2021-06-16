@@ -119,7 +119,7 @@ sleep 5
 echo "Создадим журнал хранения ошибок"
 sleep 3
 sudo mkdir /var/log/vipnetlog
-echo -n "Введите пароль vipnet нашей организации > "
+echo -n "Введите пароль vipnet вашей организации > "
 read passwd
 sudo vipnetclient eventlog --psw $passwd --output /var/log/vipnetlog/
 echo "Журнал создан, он находится здесь: /var/log/vipnetlog/"
