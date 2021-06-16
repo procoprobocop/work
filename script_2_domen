@@ -19,7 +19,6 @@ sudo sed -i "s/SELINUX=enforcing/SELINUX=permissive/" /etc/selinux/config
 #
 #
 echo "Вам будет предложено добавить компьютер в домен, после чего произойдёт перезагрузка"
-echo "Обязательно укажите группу пользователя которого добавляете в домен (как в Active Directory)"
 sleep 3
 #редактируем файл nsswitch.conf, выдаём приоритет системе доменных имён
 sudo sed -i '67d' /etc/authselect/nsswitch.conf
