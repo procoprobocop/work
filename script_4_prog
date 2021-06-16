@@ -374,7 +374,7 @@ sudo dnf -y install gnome-disk-utility gparted lm_sensors hwloc lshw inxi htop l
 sudo dnf -y install libX11-devel freetype-devel zlib-devel libxcb-devel libxslt-devel libgcrypt-devel libxml2-devel gnutls-devel 
 sudo dnf -y install libpng-devel libjpeg-turbo-devel libtiff-devel gstreamer-devel dbus-devel fontconfig-devel stress-ng
 sudo dnf -y install git gettext-devel openssl-devel perl-CPAN perl-devel zlib-devel
-sudo dnf groupinstall "Development Tools"
+sudo dnf -y groupinstall "Development Tools"
 echo "Как пользоваться этими программами можно узнать в инструкции"
 sleep 3
 #
