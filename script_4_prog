@@ -82,7 +82,8 @@ sleep 3
 sudo dnf -y install vipnetclient-gui_gost_ru_*.rpm
 sudo dnf -y install libxcb-devel-1.14-2.el7.i686 libxcb-doc-1.14-2.el7.noarch
 #указываем путь к .dst-файлу
-echo -n "Укажите полный путь к dst-файлу, например: /mnt/Disk2/LARM-Sal-PTOUD-СметанинПВ/abn_5284.dst > "
+#файлы .dst и пароль, сохраняем для удобства в корне Disk2.
+echo -n "Укажите полный путь к dst-файлу, например: /mnt/Disk2/LARM-Sal-PTOUD-СметанинПВ/abc_0001.dst > "
 read name
 #вводим пароль от .dst-файла
 echo -n "Введите пароль от вашего dst-файла и в следующем запросе повторите ввод > "
@@ -96,7 +97,7 @@ sudo vipnetclient debug --tcp-tunnel-mode auto
 sudo vipnetclient debug --autostart
 sudo systemctl stop vipnetclient
 sudo vipnetclient debug --tunnel-visibility 0
-#выполняем настройки маршрутизации клиента 
+#выполняем настройки маршрутизации клиента (запись о dns именах будет скрыта)
 sudo sed -i '13d' /etc/vipnet.conf
 sudo sh -c "echo 'iptables=off' >> /etc/vipnet.conf"
 sudo sed -i '9d' /etc/vipnet.conf
@@ -278,6 +279,8 @@ sleep 3
 cd /mnt/Disk2/repo/CryptoPRO/
 sudo chmod ugo+x install_gui.sh
 sudo ./install_gui.sh
+#в открывшемся окне: Next -> выбираем всё -> Next -> Install -> Ok -> Enter the license now
+#вводим номер лицензии -> Enter -> Ok -> Exit ->Yes
 #устанавливаем лицензию
 /opt/cprocsp/sbin/amd64/cpconfig -license -view
 echo "Сверяйте введённый ключ"
@@ -406,7 +409,7 @@ sudo sed -i '41d' /etc/modprobe.d/alsa-base.conf
 sudo perl -i -pe 'print "options snd-pcsp index=10\n" if $. == 41' /etc/modprobe.d/alsa-base.conf
 sudo sed -i '43d' /etc/modprobe.d/alsa-base.conf
 sudo perl -i -pe 'print "options snd-usb-audio index=10\n" if $. == 43' /etc/modprobe.d/alsa-base.conf
-#запускаем интерфейс настройки звуковой платы
+#запускаем интерфейс звуковой платы
 alsamixer
 #далее жмём F6 –> 0 HAD Intel PCH -> стрелочкой вверх выставляем максимальные значения следующим выходам: Master, PCM, Front, Front Mic, Frjnt Mic Boost, Surround, Center, LFE, Line, Line Boost, Rear Mic, Rear Mic Boost. Меняем значение: Auto-Mute Mode на Disable. Выходим Esc.
 #далее заходим: Параметры -> Звук -> Оборудование -> Встроенное аудио -> выставляем Профиль: Аналоговый стерео выход -> вкладка Выход -> выставляем Канал: Линейный выход.
@@ -426,7 +429,7 @@ sudo systemctl enable cups
 sudo systemctl restart cups
 #запускаем интерактивный устаночный файл
 hp-setup
-#Setup Device -> Network/Ethernet -> Next -> Выбираем нужный из списка найденных -> Next -> (ничего не трогаем, ждём. Если не найдёт драйвер, указываем нужный PPD file вручную) -> Add Printer -> во всплывающем окне вводим root и его пароль -> Ok -> Next -> переходим во вкладку Action -> Install Required Plugin (если есть)-> Yes -> Select and install an existing local copy of the plug-in file (advanced) -> указываем скачанный файл hplip-3.20.11-plugin.run -> Next -> Yes -> принимаем лицензионное соглашение -> Next -> во всплывающем окне вводим пароль от root -> Ok
+#Setup Device -> Network/Ethernet -> Next -> Выбираем нужный из списка найденных -> Next -> (ничего не трогаем, ждём. Если не найдёт драйвер, указываем нужный PPD file вручную) -> Add Printer -> во всплывающем окне вводим root и его пароль -> Ok 
 #Принтер установлен и его можно увидеть в Администрирование -> Управление устройствами HP -> HP Device Manager.
 #Отключаем уведомления: Администрирование -> Управление устройствами HP -> Configure -> Preferences -> System Tray Icon -> Always hide -> Ok.
 scanimage -L
@@ -489,13 +492,15 @@ sudo cp -r /mnt/Disk2/repo/plank_link/* /home/$USER@$DOMAIN/.config/plank/dock1/
 #
 echo "Производим резервное копирование корневой директории в папку /mnt/Disk2/Backup"
 sleep 3
+#заходим на HDD, создаём директорию Backup и даём к ней доступ для всех
 cd /mnt/Disk2/
 sudo mkdir Backup
 sudo chmod 777 Backup
 cd Backup/
+#создаём переменную с актуальным временем и запускаем побитовое копирование корневой директории в директорию Backup
 today=$(date "+%F-%H-%M-%S")
 sudo dd if=/dev/mapper/ro_redos-root conv=sync,noerror bs=64K status=progress | gzip -c  > $today.gz
-#восстановление: gunzip -c /mnt/Disk2/Backup/$today.gz | dd of=/dev/mapper/ro_redos-root status=progress
+#восстановление: gunzip -c /mnt/Disk2/Backup/имя_файла.gz | dd of=/dev/mapper/ro_redos-root status=progress
 cd
 #
 #
