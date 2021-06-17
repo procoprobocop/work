@@ -514,4 +514,4 @@ dconf write /org/mate/screensaver/idle-activation-enabled true
 dconf write /org/mate/screensaver/lock-enabled true
 sudo rm -rf /mnt/Disk2/repo
 sudo rm -rf /mnt/Disk2/work
-reboot
+sudo reboot
