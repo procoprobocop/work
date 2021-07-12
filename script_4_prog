@@ -258,14 +258,11 @@ wine eztwain_setup.exe
 #подменяем установленные файлы (этот костыль нужен из-за кривизны установки в Linux)
 rm -rf /home/$USER@$DOMAIN/.wine/drive_c/Lotus/Notes/*
 cp -pr /mnt/Disk2/repo/Lotus/Notes/* /home/$USER@$DOMAIN/.wine/drive_c/Lotus/Notes/
+rm -rf /home/$USER@$DOMAIN/.wine/drive_c/Lotus/Notes/Data/desktop8.ndk
 #удаляем лишнюю ссылку
 sed -i '3d' /home/$USER@$DOMAIN/Рабочий\ стол/IBM\ Notes\ \(Basic\).desktop
 #указываем правильный путь 
 perl -i -pe 'print "Exec=wine C:\\\\\\Lotus\\\\\\Notes\\\\\\\\notes.exe -sa\n" if $. == 3' /home/$USER@$DOMAIN/Рабочий\ стол/IBM\ Notes\ \(Basic\).desktop
-echo "Запускается Lotus Notes, укажите расположение своего id файла"
-sleep 3
-#запускаем программу 
-wine C:\\Lotus\\Notes\\notes.exe -sa
 #удаляем лишние ссылки с рабочего стола
 rm -rf /home/$USER@$DOMAIN/Рабочий\ стол/IBM\ Notes\ \(Basic\).lnk
 rm -rf /home/$USER@$DOMAIN/Рабочий\ стол/EZTwain\ Pro\ User\ Guide.lnk
@@ -508,10 +505,10 @@ cd
 #
 echo "Удаляем группу Пользователи домена из файла /etc/sudoers и перезагружаемся"
 sleep 3
+sudo rm -rf /mnt/Disk2/repo
+sudo rm -rf /mnt/Disk2/work
 sudo sed -i '109d' /etc/sudoers
 #возвращаем настройки рабочего стола и удаляем папки с установочными файлами
 dconf write /org/mate/screensaver/idle-activation-enabled true
 dconf write /org/mate/screensaver/lock-enabled true
-sudo rm -rf /mnt/Disk2/repo
-sudo rm -rf /mnt/Disk2/work
-sudo reboot
+reboot
