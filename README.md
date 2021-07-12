@@ -11,7 +11,7 @@ _#Подготовка к запуску скриптов_
 
 3. Откройте терминал и введите:
 
-**git clone https://github.com/procoprobocop/work.git
+**git clone https://github.com/procoprobocop/work.git**
 
 **cd work/** 
 
