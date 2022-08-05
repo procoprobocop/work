@@ -143,6 +143,8 @@ sudo /opt/kaspersky/kesl/bin/kesl-setup.pl
 #
 echo "Установка офиса Р-7"
 sleep 3
+#устанавливаем вспомогательные библиотеки
+sudo dnf install http://li.nux.ro/download/nux/dextop/el7/x86_64//gstreamer1-libav-1.0.6-1.el7.nux.x86_64.rpm
 #запускаем установочный пакет
 sudo dnf -y install r7-office.rpm
 #добавляем в программы по умолчанию
