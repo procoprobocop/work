@@ -2,6 +2,8 @@
 curl -L https://download.jetbrains.com/python/pycharm-community-2022.2.2.tar.gz | tar -xvz
 cd pycharm-community-2022.2.2/bin/
 ./pycharm.sh
+#создаём переменную DOMAIN и присваиваем ей значение dns-имени домена
+DOMAIN=$(dnsdomainname -d)
 sudo echo -e "[Desktop Entry]\nVersion=1.0\nType=Application\nTerminal=false\nIcon=/home/$USER@$DOMAIN/pycharm-community-2022.2.2/bin/pycharm.png\nName[ru_RU]=PyCharm\nExec=/home/$USER@$DOMAIN/pycharm-community-2022.2.2/bin/pycharm.sh\nName=PyCharm" > /home/$USER@$DOMAIN/Рабочий\ стол/PyCharm.desktop
 sudo chmod ugo+x /home/$USER@$DOMAIN/Рабочий\ стол/PyCharm.desktop
 sudo gtk-update-icon-cache -ft /usr/share/icons/hicolor
