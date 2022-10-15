@@ -14,5 +14,4 @@ chmod ugo+x /home/$USER@$DOMAIN/Рабочий\ стол/VueScan.desktop
 sudo gtk-update-icon-cache -ft /usr/share/icons/hicolor
 #удаляем ненужные файлы
 rm -rf /home/$USER@$DOMAIN/VueScan
-rm -rf /home/$USER@$DOMAIN/vuescan*
-rm -rf /home/$USER@$DOMAIN/vuex*
+rm -rf /home/$USER@$DOMAIN/vue*
