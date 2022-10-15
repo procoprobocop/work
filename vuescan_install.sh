@@ -1,5 +1,5 @@
 #скачиваем и распаковываем
-wget https://www.hamrick.com/files/vuex6497.tgz
+wget https://www.hamrick.com/files/vuex6497.tgz 
 gunzip vuex6497.tgz
 tar -xvf vuex6497.tar
 #копируем в общую директорию
@@ -12,3 +12,7 @@ echo -e "[Desktop Entry]\nVersion=1.0\nType=Application\nTerminal=false\nIcon=/u
 chmod ugo+x /home/$USER@$DOMAIN/Рабочий\ стол/VueScan.desktop
 #обновить иконки
 sudo gtk-update-icon-cache -ft /usr/share/icons/hicolor
+#удаляем ненужные файлы
+rm -rf /home/$USER@$DOMAIN/VueScan
+rm -rf /home/$USER@$DOMAIN/vuescan*
+rm -rf /home/$USER@$DOMAIN/vuex*
