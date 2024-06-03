@@ -1,23 +1,29 @@
 #!/bin/bash
 
-# Установка пакета auditd
-apt-get install -y auditd
+# Установка службы Auditd
+echo "Установка службы Auditd..."
+sudo apt-get install -y auditd
 
-# Запуск и включение службы auditd
-systemctl start auditd
-systemctl enable auditd
+# Запуск и включение службы
+echo "Запуск и включение службы Auditd..."
+sudo systemctl start auditd
+sudo systemctl enable auditd
 
-# Настройка параметров конфигурационного файла auditd.conf
-cat << EOF > /etc/audit/auditd.conf
-max_log_file = 50
-num_logs = 5
-log_file = /var/log/audit/audit.log
-log_group = root
-EOF
+# Настройка параметров конфигурационного файла
+echo "Настройка параметров конфигурационного файла..."
+sudo sed -i 's/^max_log_file.*/max_log_file = 100/g' /etc/audit/auditd.conf
+sudo sed -i 's/^num_logs.*/num_logs = 5/g' /etc/audit/auditd.conf
+sudo sed -i 's/^log_file.*/log_file = \/var\/log\/audit\/audit.log/g' /etc/audit/auditd.conf
+sudo sed -i 's/^log_group.*/log_group = root/g' /etc/audit/auditd.conf
 
 # Настройка правил регистрации событий безопасности
-cat << EOF > /etc/audit/rules.d/security_events.rules
-# Отслеживание изменений в директории /var/log
+echo "Настройка правил регистрации событий безопасности..."
+sudo cp /etc/audit/audit.rules /etc/audit/audit.rules.backup
+
+# Добавление правил из таблицы 1
+sudo cat << EOF >> /etc/audit/audit.rules
+
+# Отслеживание изменений в директории или файле
 -w /var/log -p w -k var_log_changes
 
 # Аудит пользователей, групп, базы данных паролей
@@ -28,7 +34,7 @@ cat << EOF > /etc/audit/rules.d/security_events.rules
 -w /etc/security/opasswd -k opasswd
 -w /etc/adduser.conf -k adduserconf
 
-# Аудит изменений в файле sudoers
+# Аудит изменений в файле Sudoers
 -w /etc/sudoers -p wa -k actions
 
 # Аудит паролей
@@ -64,5 +70,8 @@ cat << EOF > /etc/audit/rules.d/security_events.rules
 -w /dev/bus/usb -p rwxa -k usb
 EOF
 
-# Перезагрузка службы auditd для применения новых правил
-systemctl restart auditd
+# Перезагрузка службы
+echo "Перезагрузка службы Auditd..."
+sudo systemctl restart auditd
+
+echo "Настройка регистрации событий безопасности завершена."
